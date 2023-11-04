@@ -7,8 +7,7 @@
 	struct name##args { p1; p2; };      \
 	void *name(struct name##args *args) \
 	{                                   \
-		p1;                             \
-		p2;
+		p1; p2;                         \
 
 #define SETARGS2(n1, n2) \
 	n1 = args->n1;       \
