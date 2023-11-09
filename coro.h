@@ -2,6 +2,7 @@
 #define CORO_INCLUDED
 
 #include <pthread.h>
+#include <stdlib.h>
 
 /* Some dirty macro tricks */
 
