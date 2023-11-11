@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -xe
 
 case "$*" in
 	'') gcc -g -Wall -Wextra -lpthread -o main main.c ;;
