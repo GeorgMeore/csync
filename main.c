@@ -5,9 +5,9 @@
 #include "chan.h"
 #include "rendezvous.h"
 
-CORO_BEGIN1(printer, CHAN_OF(int) *in)
+DEFINE_CORO1(printer, CHAN_OF(int) *, in)
+{
 	int x;
-	CORO_SETARGS1(in);
 	for (;;) {
 		int err = chrecv(in, &x);
 		if (err == CHAN_CLOSED)
@@ -15,11 +15,11 @@ CORO_BEGIN1(printer, CHAN_OF(int) *in)
 		printf("%d\n", x);
 	}
 	printf("printer finished\n");
-CORO_END
+}
 
-CORO_BEGIN1(sender, CHAN_OF(int) *out)
+DEFINE_CORO1(sender, CHAN_OF(int) *, out)
+{
 	int x = 0;
-	CORO_SETARGS1(out);
 	for (;;) {
 		int err = chsend(out, &x);
 		if (err == CHAN_CLOSED)
@@ -27,15 +27,15 @@ CORO_BEGIN1(sender, CHAN_OF(int) *out)
 		x += 1;
 	}
 	printf("sender finished\n");
-CORO_END
+}
 
 int sendprinttest()
 {
 	chan c;
 	if (!chinit(&c, sizeof(int)))
 		return 1;
-	CORO_START(sender, &c);
-	CORO_START(printer, &c);
+	RUN_CORO(sender, &c);
+	RUN_CORO(printer, &c);
 	getchar();
 	chclose(&c);
 	getchar();
@@ -43,9 +43,9 @@ int sendprinttest()
 	return 0;
 }
 
-CORO_BEGIN2(foo, CHAN_OF(int) *in, CHAN_OF(int) *out)
+DEFINE_CORO2(foo, CHAN_OF(int) *, in, CHAN_OF(int) *, out)
+{
 	int x, y;
-	CORO_SETARGS2(in, out);
 	printf("starting a foo loop\n");
 	for (;;) {
 		int err = chtryrecv(in, &x);
@@ -63,7 +63,7 @@ CORO_BEGIN2(foo, CHAN_OF(int) *in, CHAN_OF(int) *out)
 	printf("exited a foo loop\n");
 	sleep(5);
 	chclose(out);
-CORO_END
+}
 
 int footest(void)
 {
@@ -71,7 +71,7 @@ int footest(void)
 	int x, y;
 	if (!chinit(&in, sizeof(int)) || !chinit(&out, sizeof(int)))
 		return 1;
-	CORO_START(foo, &in, &out);
+	RUN_CORO(foo, &in, &out);
 	printf("starting the main loop\n");
 	while (scanf(" %d", &x) == 1) {
 		chsend(&in, &x);
@@ -86,16 +86,16 @@ int footest(void)
 	return 0;
 }
 
-CORO_BEGIN1(bar, RENDEZVOUS_OF(int) *rv)
+DEFINE_CORO1(bar, RENDEZVOUS_OF(int) *, rv)
+{
 	int x = 0, y;
-	CORO_SETARGS1(rv);
 	for (;;) {
 		rvexchange(rv, &x, &y);
 		if (!y)
 			break;
 		x = y * 10;
 	}
-CORO_END
+}
 
 int bartest(void)
 {
@@ -103,7 +103,7 @@ int bartest(void)
 	rendezvous rv;
 	if (!rvinit(&rv, sizeof(int)))
 		return 1;
-	CORO_START(bar, &rv);
+	RUN_CORO(bar, &rv);
 	for (;;) {
 		scanf(" %d", &x);
 		rvexchange(&rv, &x, &y);
